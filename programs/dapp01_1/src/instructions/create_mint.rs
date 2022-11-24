@@ -6,7 +6,7 @@ use anchor_spl::token::{
 declare_id!("A1WQcJ7w8QPmyUmjUtfsvVMk47pCYcXSFf9hZq7mRwUF");
 
 pub fn init_mint (
-    ctx: Context<InitMint>
+    _ctx: Context<InitMint>
 ) -> Result<()> {
     Ok(())
 }

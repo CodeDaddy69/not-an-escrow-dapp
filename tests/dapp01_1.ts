@@ -2,22 +2,20 @@ import * as anchor from "@project-serum/anchor";
 import { Program } from "@project-serum/anchor";
 import { Dapp011 } from "../target/types/dapp01_1";
 import { SystemProgram, PublicKey } from "@solana/web3.js";
-import { TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID, withdrawWithheldTokensFromMint } from "@solana/spl-token";
 import { getMint, createMint, createMintToInstruction, getAssociatedTokenAddress, createAssociatedTokenAccountInstruction } from '@solana/spl-token';
 import { Connection, Keypair, LAMPORTS_PER_SOL } from '@solana/web3.js';
-import { program } from "@project-serum/anchor/dist/cjs/spl/associated-token";
 import { expect, assert } from "chai";
 
+export const wait = (ms: number) =>
+  new Promise((resolve) => setTimeout(resolve, ms));
 
 // my program address
 export const ProgramId = new anchor.web3.PublicKey(
   "A1WQcJ7w8QPmyUmjUtfsvVMk47pCYcXSFf9hZq7mRwUF"
   ) 
 
-
-describe("dapp011", () => {
-
-
+  
   // const connection = new Connection('http://127.0.0.1:8899');
 
 
@@ -29,20 +27,27 @@ describe("dapp011", () => {
   const user = (program.provider as anchor.AnchorProvider).wallet; // initialise wallet
   const receiver = anchor.web3.Keypair.generate(); // initialise receiver
 
-  it("Trade Initialised", async () => {
+  let escrowPDA: anchor.web3.PublicKey
+  let mint: anchor.web3.Keypair;
+  let escrowTokenAddress: anchor.web3.PublicKey;
+  let userATA: anchor.web3.PublicKey;
+
+describe("dapp011", () => {
+    before(async () => {
 
     // escrow wallet
-    const [escrowPDA, _] = await PublicKey.findProgramAddress([
+    const [PDA, _] = await PublicKey.findProgramAddress([
       anchor.utils.bytes.utf8.encode("escrow"),
       user.publicKey.toBuffer(),
-//      receiver.publicKey.toBuffer()
+    //      receiver.publicKey.toBuffer()
     ], 
     program.programId
     );
 
-
+    escrowPDA = PDA;
+    
     // initialise mint address
-    const mint = anchor.web3.Keypair.generate()
+    mint = anchor.web3.Keypair.generate()
     console.log("mint address:", mint.publicKey.toString())
 
     // initialise mint account
@@ -62,7 +67,12 @@ describe("dapp011", () => {
     // console.log(mintInfo.value.data);
 
     //escrow token account
-    const escrowTokenAddress = await getAssociatedTokenAddress(mint.publicKey, escrowPDA, true)
+    escrowTokenAddress = await getAssociatedTokenAddress(mint.publicKey, escrowPDA, true)
+
+  })
+
+  it("Trade Initialised", async () => {
+
     // create transaction
     const tx = await program.methods.initialiseTransaction(new anchor.BN(100))
     .accounts({
@@ -98,29 +108,43 @@ describe("dapp011", () => {
   });
 
   
-  // it("Is initialized!", async () => {
+  it("Buyer Transfered", async () => {
+
+    await wait(500);
+
+    userATA = await getAssociatedTokenAddress(mint.publicKey, user.publicKey);
+
+    const tx = new anchor.web3.Transaction().add( 
+      createAssociatedTokenAccountInstruction(user.publicKey, userATA, user.publicKey, mint.publicKey)
+    )
+    .add( 
+      createMintToInstruction(mint.publicKey, userATA, user.publicKey, 1000)
+      );
 
 
+    const signature = await program.provider.sendAndConfirm(tx);
 
-    
+    const userATABalance = await program.provider.connection.getTokenAccountBalance(userATA);
+    console.log("user amount before", userATABalance.value.amount);  
+    const escrowATABalance = await program.provider.connection.getTokenAccountBalance(escrowTokenAddress);
+    console.log("escrow amount before", escrowATABalance.value.amount);
 
-  //   const userATA = await getAssociatedTokenAddress(mint.publicKey, user.publicKey);
+    const tx2 = await program.methods.buyerTransfer().accounts({
+      initialiser: user.publicKey,
+      mint: mint.publicKey,
+      initialiserTokenAccount: userATA,
+      escrow: escrowPDA,
+      escrowTokenAccount: escrowTokenAddress,
+      systemProgram: SystemProgram.programId,
+      associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+      tokenProgram: TOKEN_PROGRAM_ID,
+    })
+    .rpc();
 
-  //   const tx2 = new anchor.web3.Transaction().add( 
-  //     createAssociatedTokenAccountInstruction(user.publicKey, userATA, user.publicKey, mint.publicKey)
-  //   )
-  //   .add( 
-  //     createMintToInstruction(mint.publicKey, userATA, user.publicKey, 1000)
-  //     );
-
-  //   const signature = await program.provider.sendAndConfirm(tx2);
-  //   console.log("Account created with tx:", signature)
-
-  //   const userATAInfo = await program.provider.connection.getParsedAccountInfo(userATA);
-  //   console.log(userATAInfo.value.data, userATAInfo.value.data.valueOf());
-    
-
-
-  // });
+    const userATABalance2 = await program.provider.connection.getTokenAccountBalance(userATA);
+    console.log("user amount after", userATABalance2.value.amount);  
+    const escrowATABalance2 = await program.provider.connection.getTokenAccountBalance(escrowTokenAddress);
+    console.log("escrow amount after", escrowATABalance2.value.amount);  
+  });
 
 });

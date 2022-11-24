@@ -2,6 +2,7 @@ use anchor_lang::prelude::*;
 
 mod instructions;
 pub mod state;
+pub mod events;
 
 use instructions::*;
 
@@ -23,4 +24,16 @@ pub mod dapp01_1 {
     ) -> Result<()> {
         instructions::init_mint(ctx)
     }
+
+    pub fn buyer_transfer(
+        ctx: Context<BuyerTransfer>,
+    ) -> Result<()> {
+        instructions::buyer_transfer_handler(ctx)
+    }
+}
+
+#[error_code]
+pub enum CustomError {
+    #[msg("The state of the escrow given does not match the state required")]
+    WrongState
 }
