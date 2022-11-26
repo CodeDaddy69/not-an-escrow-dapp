@@ -30,10 +30,24 @@ pub mod dapp01_1 {
     ) -> Result<()> {
         instructions::buyer_transfer_handler(ctx)
     }
+
+    pub fn seller_sent(
+        ctx: Context<SellerConfirmed>
+    ) -> Result<()> {
+        instructions::seller_sent_handler(ctx)
+    }
+    pub fn buyer_received(
+        ctx: Context<BuyerReceived>,
+        to_dispute: bool
+    ) -> Result<()> {
+        instructions::buyer_received_handler(ctx, to_dispute)
+    }
 }
 
 #[error_code]
 pub enum CustomError {
     #[msg("The state of the escrow given does not match the state required")]
-    WrongState
-}
+    WrongState,
+    #[msg("The account given does not match that of the respective account in escrow")]
+    WrongAccount,
+}   

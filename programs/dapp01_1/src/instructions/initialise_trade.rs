@@ -5,9 +5,6 @@ use anchor_spl::{
     token::{TokenAccount, Mint, Token}
 };
 
-
-// declare_id!("A1WQcJ7w8QPmyUmjUtfsvVMk47pCYcXSFf9hZq7mRwUF");
-
 use crate::state::{TransState, Escrow};
 
 #[derive(Accounts)]
@@ -17,7 +14,7 @@ pub struct InitialiseTransaction<'info> {
     #[account(
         init,
         payer = initialiser,
-        space = 8 + 32 + 32 + 8 + 1,
+        space = 8 + 32 + 32 + 8 + 1 + 1,
         seeds = ["escrow".as_bytes(), initialiser.key().as_ref()],
         bump
     )]
@@ -44,5 +41,6 @@ pub fn initialise_transaction_handler(ctx: Context<InitialiseTransaction>, amoun
     escrow_acc.receiver = ctx.accounts.receiver.key();
     escrow_acc.amount = amount;
     escrow_acc.state = TransState::Initialised;
+    escrow_acc.bump = *ctx.bumps.get("escrow_acc").unwrap();
     Ok(())
 }

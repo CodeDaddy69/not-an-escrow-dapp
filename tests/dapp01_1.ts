@@ -1,7 +1,7 @@
 import * as anchor from "@project-serum/anchor";
 import { Program } from "@project-serum/anchor";
 import { Dapp011 } from "../target/types/dapp01_1";
-import { SystemProgram, PublicKey } from "@solana/web3.js";
+import { ParsedAccountData, SystemProgram, PublicKey } from "@solana/web3.js";
 import { TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID, withdrawWithheldTokensFromMint } from "@solana/spl-token";
 import { getMint, createMint, createMintToInstruction, getAssociatedTokenAddress, createAssociatedTokenAccountInstruction } from '@solana/spl-token';
 import { Connection, Keypair, LAMPORTS_PER_SOL } from '@solana/web3.js';
@@ -25,18 +25,19 @@ export const ProgramId = new anchor.web3.PublicKey(
 
   // variables
   const user = (program.provider as anchor.AnchorProvider).wallet; // initialise wallet
-  const receiver = anchor.web3.Keypair.generate(); // initialise receiver
+  const receiverKP = anchor.web3.Keypair.generate(); // initialise receiver
 
   let escrowPDA: anchor.web3.PublicKey
   let mint: anchor.web3.Keypair;
   let escrowTokenAddress: anchor.web3.PublicKey;
   let userATA: anchor.web3.PublicKey;
+  let receiverATA: anchor.web3.PublicKey;
 
 describe("dapp011", () => {
     before(async () => {
 
     // escrow wallet
-    const [PDA, _] = await PublicKey.findProgramAddress([
+    const [PDA, escrow_bump] = await PublicKey.findProgramAddress([
       anchor.utils.bytes.utf8.encode("escrow"),
       user.publicKey.toBuffer(),
     //      receiver.publicKey.toBuffer()
@@ -44,6 +45,7 @@ describe("dapp011", () => {
     program.programId
     );
 
+    console.log(escrow_bump)
     escrowPDA = PDA;
     
     // initialise mint address
@@ -77,7 +79,7 @@ describe("dapp011", () => {
     const tx = await program.methods.initialiseTransaction(new anchor.BN(100))
     .accounts({
       initialiser: user.publicKey,
-      receiver: receiver.publicKey,
+      receiver: receiverKP.publicKey,
       escrowAcc: escrowPDA,
       tokenAccount: escrowTokenAddress,
       mint: mint.publicKey,
@@ -91,14 +93,22 @@ describe("dapp011", () => {
 
     console.log("transaction signature:", tx);
 
+    console.log(escrowPDA.toString())
+    const DEBUG = await program.provider.connection.getParsedAccountInfo(escrowTokenAddress);
+    console.log((DEBUG.value.data as ParsedAccountData).parsed);
+
+    const DEBUG2 = await program.provider.connection.getParsedAccountInfo(escrowPDA);
+    console.log("ESCROW OWNER:", DEBUG2.value.owner.toString());
+
     const escrowAccData = await program.account.escrow.fetch(escrowPDA);
     console.log("escrow account", escrowAccData.amount.toNumber());
     console.log("escrow initialiser", escrowAccData.initialiser.toString());
     console.log("escrow receiver", escrowAccData.receiver.toString());
     console.log("escrow state", Object.keys(escrowAccData.state)[0]);
+    console.log("escrow bump", escrowAccData.bump);
     assert.equal(escrowAccData.amount.toNumber(), 100, "escrow amount data is equal to expected");
     assert.isTrue(escrowAccData.initialiser.equals(user.publicKey), "escrow initialiser  is equal to expected");
-    assert.isTrue(escrowAccData.receiver.equals(receiver.publicKey), "escrow receiver is equal to expected");
+    assert.isTrue(escrowAccData.receiver.equals(receiverKP.publicKey), "escrow receiver is equal to expected");
     assert.equal(Object.keys(escrowAccData.state)[0], 'initialised');
 
     const escrowATAData = await program.provider.connection.getParsedAccountInfo(escrowTokenAddress);
@@ -124,6 +134,8 @@ describe("dapp011", () => {
 
     const signature = await program.provider.sendAndConfirm(tx);
 
+    const escrowAccData = await program.account.escrow.fetch(escrowPDA);
+    console.log("escrow state before", Object.keys(escrowAccData.state)[0]);
     const userATABalance = await program.provider.connection.getTokenAccountBalance(userATA);
     console.log("user amount before", userATABalance.value.amount);  
     const escrowATABalance = await program.provider.connection.getTokenAccountBalance(escrowTokenAddress);
@@ -144,7 +156,48 @@ describe("dapp011", () => {
     const userATABalance2 = await program.provider.connection.getTokenAccountBalance(userATA);
     console.log("user amount after", userATABalance2.value.amount);  
     const escrowATABalance2 = await program.provider.connection.getTokenAccountBalance(escrowTokenAddress);
-    console.log("escrow amount after", escrowATABalance2.value.amount);  
-  });
+    console.log("escrow amount after", escrowATABalance2.value.amount);
+    const escrowAccData2 = await program.account.escrow.fetch(escrowPDA);
+    console.log("escrow state after", Object.keys(escrowAccData2.state)[0]);
 
+    const tx201 = await program.methods.sellerSent().accounts({
+      receiver: receiverKP.publicKey,
+      escrow: escrowPDA,
+      SystemProgram: SystemProgram.programId
+    })
+    .signers([receiverKP])
+    .rpc()
+
+    const escrowAccData3 = await program.account.escrow.fetch(escrowPDA);
+    console.log("escrow state after seller sent", Object.keys(escrowAccData3.state)[0]);
+    
+    receiverATA = await getAssociatedTokenAddress(mint.publicKey, receiverKP.publicKey);
+    
+    const tx21 = new anchor.web3.Transaction().add( 
+      createAssociatedTokenAccountInstruction(user.publicKey, receiverATA, receiverKP.publicKey, mint.publicKey)
+    )
+    
+    const signature2 = await program.provider.sendAndConfirm(tx21);
+
+    const tx3 = await program.methods.buyerReceived(false).accounts({
+      initialiser: user.publicKey,
+      receiver: receiverKP.publicKey,
+      mint: mint.publicKey,
+      receiverTokenAccount: receiverATA,
+      escrowAcc: escrowPDA,
+      escrowTokenAccount: escrowTokenAddress,
+      tokenProgram: TOKEN_PROGRAM_ID,
+      systemProgram: SystemProgram.programId,
+      associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+    })
+    .rpc()
+    
+    const escrowAccData4 = await program.account.escrow.fetch(escrowPDA);
+    console.log("escrow state after seller sent", Object.keys(escrowAccData4.state)[0]);
+
+    const receiverATABalance = await program.provider.connection.getTokenAccountBalance(receiverATA);
+    console.log("receiver amount after", receiverATABalance.value.amount);  
+    
+  });
+  
 });

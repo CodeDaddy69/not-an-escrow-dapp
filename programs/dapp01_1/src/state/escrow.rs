@@ -12,5 +12,7 @@ pub struct Escrow {
     pub amount: u64,
     // state
     pub state: TransState, 
+    // account bump
+    pub bump: u8
 }
 

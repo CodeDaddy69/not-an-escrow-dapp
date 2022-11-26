@@ -36,8 +36,7 @@ pub struct BuyerTransfer<'info> {
     pub escrow_token_account: Account<'info, TokenAccount>,
     pub token_program: Program<'info, Token>,
     pub system_program: Program<'info, System>,
-    pub associated_token_program: Program<'info, AssociatedToken>,
-    // pub rent: Sysvar<'info, Rent>
+    pub associated_token_program: Program<'info, AssociatedToken>
 }
 
 impl<'info> BuyerTransfer<'info> {
