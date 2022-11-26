@@ -32,6 +32,7 @@ export const ProgramId = new anchor.web3.PublicKey(
   let escrowTokenAddress: anchor.web3.PublicKey;
   let userATA: anchor.web3.PublicKey;
   let receiverATA: anchor.web3.PublicKey;
+  let userStatsPDA: anchor.web3.PublicKey;
 
 describe("dapp011", () => {
     before(async () => {
@@ -40,7 +41,6 @@ describe("dapp011", () => {
     const [PDA, escrow_bump] = await PublicKey.findProgramAddress([
       anchor.utils.bytes.utf8.encode("escrow"),
       user.publicKey.toBuffer(),
-    //      receiver.publicKey.toBuffer()
     ], 
     program.programId
     );
@@ -117,6 +117,29 @@ describe("dapp011", () => {
 
   });
 
+  it("User Stats Initialised", async () => {
+      
+    // user stats wallet
+    const [PDA, _] = await PublicKey.findProgramAddressSync([
+      anchor.utils.bytes.utf8.encode("user_stats"),
+      user.publicKey.toBuffer(),
+    ], 
+    program.programId
+    );
+
+    console.log(PDA.toString())
+    const tx = await program.methods.initialiseUser().accounts({
+      initialiser: user.publicKey,
+      userStats: PDA,
+      SystemProgram: SystemProgram.programId
+    })
+    .rpc()
+
+    const user_stats = await program.account.userStats.fetch(PDA);
+    console.log("user stats", user_stats)
+
+    userStatsPDA = PDA
+  });
   
   it("Buyer Transfered", async () => {
 

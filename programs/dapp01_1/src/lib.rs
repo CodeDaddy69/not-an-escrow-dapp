@@ -42,6 +42,12 @@ pub mod dapp01_1 {
     ) -> Result<()> {
         instructions::buyer_received_handler(ctx, to_dispute)
     }
+
+    pub fn initialise_user(
+        ctx: Context<InitialiseUser>
+    ) -> Result<()> {
+        instructions::initialise_user_handler(ctx)
+    }
 }
 
 #[error_code]
@@ -50,4 +56,6 @@ pub enum CustomError {
     WrongState,
     #[msg("The account given does not match that of the respective account in escrow")]
     WrongAccount,
+    #[msg("The user account has already been initialised")]
+    UserAlreadyInitialised
 }   
