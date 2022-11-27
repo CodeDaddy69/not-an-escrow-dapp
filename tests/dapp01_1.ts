@@ -2,7 +2,7 @@ import * as anchor from "@project-serum/anchor";
 import { Program } from "@project-serum/anchor";
 import { Dapp011 } from "../target/types/dapp01_1";
 import { ParsedAccountData, SystemProgram, PublicKey } from "@solana/web3.js";
-import { TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID, withdrawWithheldTokensFromMint } from "@solana/spl-token";
+import { TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID, withdrawWithheldTokensFromMint, createMintToCheckedInstruction } from "@solana/spl-token";
 import { getMint, createMint, createMintToInstruction, getAssociatedTokenAddress, createAssociatedTokenAccountInstruction } from '@solana/spl-token';
 import { Connection, Keypair, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { expect, assert } from "chai";
@@ -140,14 +140,14 @@ describe("dapp011", () => {
     const tx = await program.methods.initialiseUser().accounts({
       initialiser: user.publicKey,
       userStats: PDA,
-      SystemProgram: SystemProgram.programId
+      systemProgram: SystemProgram.programId
     })
     .rpc()
 
     const tx2 = await program.methods.initialiseUser().accounts({
       initialiser: receiverKP.publicKey,
       userStats: receiverStatsPDA,
-      SystemProgram: SystemProgram.programId
+      systemProgram: SystemProgram.programId
     })
     .signers([receiverKP])
     .rpc()
@@ -200,7 +200,7 @@ describe("dapp011", () => {
     const tx201 = await program.methods.sellerSent().accounts({
       receiver: receiverKP.publicKey,
       escrow: escrowPDA,
-      SystemProgram: SystemProgram.programId
+      systemProgram: SystemProgram.programId
     })
     .signers([receiverKP])
     .rpc()
@@ -242,6 +242,38 @@ describe("dapp011", () => {
     
     const receiverStats2 = await program.account.userStats.fetch(receiverStatsPDA);
     console.log(receiverStats2);  
+    
+
+
+      //  listing PDA
+      const [PDA3, _2] = await PublicKey.findProgramAddressSync([
+        anchor.utils.bytes.utf8.encode("listing"),
+        user.publicKey.toBuffer(),
+        (new anchor.BN(4)).toBuffer()
+      ], 
+      program.programId
+      );  
+
+      const listing_args = {
+        bump: _2,
+        identifier: 4,
+        name: "jacket",
+        itemType: "Jacket",
+        colour: "Blue",
+        condition: {tag: "New", conditionMap: [{isMajor: true, isFront: true, xPos: 1, yPos: 1}]},
+        seller: user.publicKey,
+        saleState: "ForSale"
+      }
+
+      const args = await program.coder.accounts.encode("listing", listing_args)
+
+      program.account.listing
+    const tx4 = await program.methods.createListing(args.buffer).accounts({
+      initialiser: user.publicKey,
+      userListing: PDA3,
+      systemProgram: SystemProgram.programId
+    })
+    .rpc()
     
     
   });

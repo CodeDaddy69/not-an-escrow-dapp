@@ -5,6 +5,7 @@ pub mod state;
 pub mod events;
 
 use instructions::*;
+use state::Listing;
 
 declare_id!("A1WQcJ7w8QPmyUmjUtfsvVMk47pCYcXSFf9hZq7mRwUF");
 
@@ -47,6 +48,13 @@ pub mod dapp01_1 {
         ctx: Context<InitialiseUser>
     ) -> Result<()> {
         instructions::initialise_user_handler(ctx)
+    }
+
+    pub fn create_listing(
+        ctx: Context<InitialiseListing>,
+        listing_args: Listing
+    ) -> Result<()> {
+        instructions::initialise_listing_handler(ctx, listing_args)
     }
 }
 
