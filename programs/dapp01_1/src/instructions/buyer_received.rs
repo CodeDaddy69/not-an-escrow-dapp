@@ -9,7 +9,7 @@ use anchor_spl::{
     Mint,
     CloseAccount
 }};
-use crate::state::{TransState, Escrow};
+use crate::state::{TransState, Escrow, UserStats};
 use crate::CustomError;
 
 #[derive(Accounts)]
@@ -42,6 +42,18 @@ pub struct BuyerReceived<'info> {
         associated_token::authority = escrow_acc
     )]
     pub escrow_token_account: Account<'info, TokenAccount>,
+    #[account(
+        mut,
+        seeds = ["user_stats".as_bytes(), initialiser.key().as_ref()],
+        bump
+    )]
+    pub initiater_stats: Account<'info, UserStats>,
+    #[account(
+        mut,
+        seeds = ["user_stats".as_bytes(), receiver.key().as_ref()],
+        bump
+    )]
+    pub receiver_stats: Account<'info, UserStats>,
     pub token_program: Program<'info, Token>,
     pub system_program: Program<'info, System>,
     pub associated_token_program: Program<'info, AssociatedToken>,
@@ -102,6 +114,10 @@ pub fn buyer_received_handler(ctx: Context<BuyerReceived>, to_dispute: bool) -> 
         let escrow = &mut ctx.accounts.escrow_acc;
         escrow.state = TransState::Finalised;
 
+        let initiater_stats = &mut ctx.accounts.initiater_stats;
+        initiater_stats.purchases += 1;
+        let receiver_stats = &mut ctx.accounts.receiver_stats;
+        receiver_stats.sales += 1;
     }
 
     Ok(())

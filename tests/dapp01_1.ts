@@ -26,6 +26,7 @@ export const ProgramId = new anchor.web3.PublicKey(
   // variables
   const user = (program.provider as anchor.AnchorProvider).wallet; // initialise wallet
   const receiverKP = anchor.web3.Keypair.generate(); // initialise receiver
+  program.provider.connection.requestAirdrop(receiverKP.publicKey, 2*LAMPORTS_PER_SOL);
 
   let escrowPDA: anchor.web3.PublicKey
   let mint: anchor.web3.Keypair;
@@ -33,6 +34,7 @@ export const ProgramId = new anchor.web3.PublicKey(
   let userATA: anchor.web3.PublicKey;
   let receiverATA: anchor.web3.PublicKey;
   let userStatsPDA: anchor.web3.PublicKey;
+  let receiverStatsPDA: anchor.web3.PublicKey;
 
 describe("dapp011", () => {
     before(async () => {
@@ -65,8 +67,6 @@ describe("dapp011", () => {
     .signers([mint])
     .rpc();
 
-    // const mintInfo = await program.provider.connection.getParsedAccountInfo(mint.publicKey)
-    // console.log(mintInfo.value.data);
 
     //escrow token account
     escrowTokenAddress = await getAssociatedTokenAddress(mint.publicKey, escrowPDA, true)
@@ -127,7 +127,16 @@ describe("dapp011", () => {
     program.programId
     );
 
-    console.log(PDA.toString())
+    // receiver stats wallet
+    const [PDA2, _1] = await PublicKey.findProgramAddressSync([
+      anchor.utils.bytes.utf8.encode("user_stats"),
+      receiverKP.publicKey.toBuffer(),
+    ], 
+    program.programId
+    );
+
+    receiverStatsPDA = PDA2;
+
     const tx = await program.methods.initialiseUser().accounts({
       initialiser: user.publicKey,
       userStats: PDA,
@@ -135,12 +144,17 @@ describe("dapp011", () => {
     })
     .rpc()
 
-    const user_stats = await program.account.userStats.fetch(PDA);
-    console.log("user stats", user_stats)
+    const tx2 = await program.methods.initialiseUser().accounts({
+      initialiser: receiverKP.publicKey,
+      userStats: receiverStatsPDA,
+      SystemProgram: SystemProgram.programId
+    })
+    .signers([receiverKP])
+    .rpc()
 
     userStatsPDA = PDA
   });
-  
+
   it("Buyer Transfered", async () => {
 
     await wait(500);
@@ -209,6 +223,8 @@ describe("dapp011", () => {
       receiverTokenAccount: receiverATA,
       escrowAcc: escrowPDA,
       escrowTokenAccount: escrowTokenAddress,
+      initiaterStats: userStatsPDA,
+      receiverStats: receiverStatsPDA,
       tokenProgram: TOKEN_PROGRAM_ID,
       systemProgram: SystemProgram.programId,
       associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -220,6 +236,13 @@ describe("dapp011", () => {
 
     const receiverATABalance = await program.provider.connection.getTokenAccountBalance(receiverATA);
     console.log("receiver amount after", receiverATABalance.value.amount);  
+
+    const userStats2 = await program.account.userStats.fetch(userStatsPDA);
+    console.log(userStats2);  
+    
+    const receiverStats2 = await program.account.userStats.fetch(receiverStatsPDA);
+    console.log(receiverStats2);  
+    
     
   });
   

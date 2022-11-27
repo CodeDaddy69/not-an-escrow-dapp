@@ -14,3 +14,8 @@ pub enum TransState {
     Finalised,
     Dispute
 }
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, PartialEq, Eq)]
+pub enum ItemType {
+    Jacket
+}

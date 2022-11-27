@@ -50,6 +50,11 @@ pub mod dapp01_1 {
     }
 }
 
+#[constant]
+pub const MAX_NAME_LEN: usize = 50;
+#[constant]
+pub const MAX_DESC_LEN: usize = 200;
+
 #[error_code]
 pub enum CustomError {
     #[msg("The state of the escrow given does not match the state required")]
