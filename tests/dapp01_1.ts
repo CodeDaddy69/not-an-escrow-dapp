@@ -118,7 +118,7 @@ describe("dapp011", () => {
   });
 
   it("User Stats Initialised", async () => {
-      
+    console.log(program.idl.types[1])
     // user stats wallet
     const [PDA, _] = await PublicKey.findProgramAddressSync([
       anchor.utils.bytes.utf8.encode("user_stats"),
@@ -244,36 +244,39 @@ describe("dapp011", () => {
     console.log(receiverStats2);  
     
 
+    const identifier = new anchor.BN(4)
 
-      //  listing PDA
-      const [PDA3, _2] = await PublicKey.findProgramAddressSync([
-        anchor.utils.bytes.utf8.encode("listing"),
-        user.publicKey.toBuffer(),
-        (new anchor.BN(4)).toBuffer()
-      ], 
-      program.programId
-      );  
+    //  listing PDA
+    const [PDA3, _2] = await PublicKey.findProgramAddressSync([
+      anchor.utils.bytes.utf8.encode("listing"),
+      user.publicKey.toBuffer(),
+      identifier.toBuffer("le", 8)
+    ], 
+    program.programId
+    );  
 
-      const listing_args = {
-        bump: _2,
-        identifier: 4,
-        name: "jacket",
-        itemType: "Jacket",
-        colour: "Blue",
-        condition: {tag: "New", conditionMap: [{isMajor: true, isFront: true, xPos: 1, yPos: 1}]},
-        seller: user.publicKey,
-        saleState: "ForSale"
-      }
+    console.log(PDA3.toString())
 
-      const args = await program.coder.accounts.encode("listing", listing_args)
+    const listing_args = {
+      bump: _2,
+      identifier: identifier,
+      name: "jacket",
+      itemType: {jacket:{}} as never,
+      colour: {blue:{}} as never,
+      condition: {tag: {new:{} as never}, conditionMap: [{isMajor: true, isFront: true, xPos: 1, yPos: 1}]},
+      seller: user.publicKey,
+      saleState: {forSale:{}} as never
+    }
 
-      program.account.listing
-    const tx4 = await program.methods.createListing(args.buffer).accounts({
+    //const args = await program.coder.accounts.encode("Listing", listing_args)
+
+    const tx4 = await program.methods.createListing(listing_args).accounts({
       initialiser: user.publicKey,
       userListing: PDA3,
       systemProgram: SystemProgram.programId
     })
     .rpc()
+    
     
     
   });
