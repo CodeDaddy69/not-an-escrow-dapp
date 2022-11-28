@@ -26,7 +26,6 @@ export const ProgramId = new anchor.web3.PublicKey(
   // variables
   const user = (program.provider as anchor.AnchorProvider).wallet; // initialise wallet
   const receiverKP = anchor.web3.Keypair.generate(); // initialise receiver
-  program.provider.connection.requestAirdrop(receiverKP.publicKey, 2*LAMPORTS_PER_SOL);
 
   let escrowPDA: anchor.web3.PublicKey
   let mint: anchor.web3.Keypair;
@@ -35,14 +34,64 @@ export const ProgramId = new anchor.web3.PublicKey(
   let receiverATA: anchor.web3.PublicKey;
   let userStatsPDA: anchor.web3.PublicKey;
   let receiverStatsPDA: anchor.web3.PublicKey;
+  let listingpda: anchor.web3.PublicKey;
 
 describe("dapp011", () => {
-    before(async () => {
+  before("Listed", async () => {
+  
+    const tx = await program.provider.connection.requestAirdrop(receiverKP.publicKey, 2*LAMPORTS_PER_SOL);
+    await wait(500);
+
+    const bal = await program.provider.connection.getBalance(receiverKP.publicKey);
+    console.log("receiver balance", bal);
+
+    const identifier = new anchor.BN(4)
+
+    //  listing PDA
+    const [PDA3, _2] = await PublicKey.findProgramAddressSync([
+      anchor.utils.bytes.utf8.encode("listing"),
+      receiverKP.publicKey.toBuffer(),
+      identifier.toBuffer("le", 8)
+    ], 
+    program.programId
+    );  
+
+    listingpda = PDA3;
+
+    console.log(listingpda.toString())
+
+    const listing_args = {
+      bump: _2,
+      identifier: identifier,
+      name: "jacket",
+      itemType: {jacket:{}} as never,
+      colour: {blue:{}} as never,
+      condition: {tag: {new:{} as never}, conditionMap: [{isMajor: true, isFront: true, xPos: 1, yPos: 1}]},
+      seller: receiverKP.publicKey,
+      saleState: {forSale:{}} as never
+    };
+
+
+    const tx4 = await program.methods.createListing(listing_args).accounts({
+      initialiser: receiverKP.publicKey,
+      userListing: listingpda,
+      systemProgram: SystemProgram.programId
+    })
+    .signers([receiverKP])
+    .rpc();
+    
+    const pda3data = await program.account.listing.fetch(listingpda);
+
+    console.log(pda3data);
+  })
+
+  before(async () => {
 
     // escrow wallet
     const [PDA, escrow_bump] = await PublicKey.findProgramAddress([
       anchor.utils.bytes.utf8.encode("escrow"),
       user.publicKey.toBuffer(),
+      listingpda.toBuffer()
     ], 
     program.programId
     );
@@ -73,6 +122,7 @@ describe("dapp011", () => {
 
   })
 
+  
   it("Trade Initialised", async () => {
 
     // create transaction
@@ -81,6 +131,7 @@ describe("dapp011", () => {
       initialiser: user.publicKey,
       receiver: receiverKP.publicKey,
       escrowAcc: escrowPDA,
+      listing: listingpda,
       tokenAccount: escrowTokenAddress,
       mint: mint.publicKey,
       systemProgram: SystemProgram.programId,
@@ -207,7 +258,7 @@ describe("dapp011", () => {
 
     const escrowAccData3 = await program.account.escrow.fetch(escrowPDA);
     console.log("escrow state after seller sent", Object.keys(escrowAccData3.state)[0]);
-    
+
     receiverATA = await getAssociatedTokenAddress(mint.publicKey, receiverKP.publicKey);
     
     const tx21 = new anchor.web3.Transaction().add( 
@@ -216,10 +267,13 @@ describe("dapp011", () => {
     
     const signature2 = await program.provider.sendAndConfirm(tx21);
 
+    console.log("HERE")
+
     const tx3 = await program.methods.buyerReceived(false).accounts({
       initialiser: user.publicKey,
       receiver: receiverKP.publicKey,
       mint: mint.publicKey,
+      listing: listingpda, 
       receiverTokenAccount: receiverATA,
       escrowAcc: escrowPDA,
       escrowTokenAccount: escrowTokenAddress,
@@ -242,43 +296,10 @@ describe("dapp011", () => {
     
     const receiverStats2 = await program.account.userStats.fetch(receiverStatsPDA);
     console.log(receiverStats2);  
-    
 
-    const identifier = new anchor.BN(4)
-
-    //  listing PDA
-    const [PDA3, _2] = await PublicKey.findProgramAddressSync([
-      anchor.utils.bytes.utf8.encode("listing"),
-      user.publicKey.toBuffer(),
-      identifier.toBuffer("le", 8)
-    ], 
-    program.programId
-    );  
-
-    console.log(PDA3.toString())
-
-    const listing_args = {
-      bump: _2,
-      identifier: identifier,
-      name: "jacket",
-      itemType: {jacket:{}} as never,
-      colour: {blue:{}} as never,
-      condition: {tag: {new:{} as never}, conditionMap: [{isMajor: true, isFront: true, xPos: 1, yPos: 1}]},
-      seller: user.publicKey,
-      saleState: {forSale:{}} as never
-    }
-
-    //const args = await program.coder.accounts.encode("Listing", listing_args)
-
-    const tx4 = await program.methods.createListing(listing_args).accounts({
-      initialiser: user.publicKey,
-      userListing: PDA3,
-      systemProgram: SystemProgram.programId
-    })
-    .rpc()
-    
-    
-    
+    // CAUSES ERROR: PROVES LISTING ACCOUNT HAS BEEN CLOSED
+    // const pda4data = await program.account.listing.fetch(listingpda);
+    // console.log(pda4data)
   });
   
 });

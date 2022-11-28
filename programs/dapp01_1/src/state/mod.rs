@@ -36,5 +36,6 @@ pub enum Tag {
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, PartialEq, Eq)]
 pub enum SaleState {
-    ForSale
+    ForSale,
+    Sold
 }

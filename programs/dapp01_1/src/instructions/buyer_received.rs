@@ -9,11 +9,13 @@ use anchor_spl::{
     Mint,
     CloseAccount
 }};
-use crate::state::{TransState, Escrow, UserStats};
+use crate::state::{TransState, Escrow, UserStats, Listing};
 use crate::CustomError;
 
 #[derive(Accounts)]
 pub struct BuyerReceived<'info> {
+    #[account(mut, close = receiver)]
+    pub listing: Account<'info, Listing>,
     #[account(
         mut,
         constraint = initialiser.key == &escrow_acc.initialiser @ CustomError::WrongAccount
@@ -23,7 +25,8 @@ pub struct BuyerReceived<'info> {
         constraint = receiver.key == &escrow_acc.receiver @ CustomError::WrongAccount
     )]
     /// CHECK: Need for ATA
-    pub receiver: UncheckedAccount<'info>,
+    #[account(mut)]
+    pub receiver: SystemAccount<'info>,
     pub mint: Account<'info, Mint>,
     #[account(
         mut,
@@ -100,6 +103,7 @@ pub fn buyer_received_handler(ctx: Context<BuyerReceived>, to_dispute: bool) -> 
             ctx.accounts.transfer_ctx().with_signer(&[&[
                 "escrow".as_bytes(),
                 escrow.initialiser.as_ref(),
+                escrow.listing.as_ref(),
                 &[escrow.bump],
             ]]),
             escrow.amount,
@@ -108,6 +112,7 @@ pub fn buyer_received_handler(ctx: Context<BuyerReceived>, to_dispute: bool) -> 
         token::close_account(ctx.accounts.close_account_ctx().with_signer(&[&[
             "escrow".as_bytes(),
             escrow.initialiser.as_ref(),
+            escrow.listing.as_ref(),
             &[escrow.bump],
         ]]))?;
 

@@ -5,7 +5,8 @@ use anchor_spl::{
     token::{TokenAccount, Mint, Token}
 };
 
-use crate::state::{TransState, Escrow};
+use crate::state::{TransState, Escrow, Listing, SaleState};
+use crate::CustomError;
 
 #[derive(Accounts)]
 pub struct InitialiseTransaction<'info> {
@@ -14,8 +15,8 @@ pub struct InitialiseTransaction<'info> {
     #[account(
         init,
         payer = initialiser,
-        space = 8 + 32 + 32 + 8 + 1 + 1,
-        seeds = ["escrow".as_bytes(), initialiser.key().as_ref()],
+        space = 8 + 32 + 32 + 8 + 1 + 1 + 32,
+        seeds = ["escrow".as_bytes(), initialiser.key().as_ref(), listing.key().as_ref()],
         bump
     )]
     pub escrow_acc: Account<'info, Escrow>,
@@ -28,6 +29,12 @@ pub struct InitialiseTransaction<'info> {
         associated_token::authority = escrow_acc
     )]
     pub token_account: Account<'info, TokenAccount>,
+
+    #[account(
+        mut,
+        constraint = listing.seller == receiver.key() @ CustomError::WrongListing
+    )]
+    pub listing: Account<'info, Listing>,
     pub mint: Account<'info, Mint>,
     pub token_program: Program<'info, Token>,
     pub system_program: Program<'info, System>,
@@ -42,5 +49,9 @@ pub fn initialise_transaction_handler(ctx: Context<InitialiseTransaction>, amoun
     escrow_acc.amount = amount;
     escrow_acc.state = TransState::Initialised;
     escrow_acc.bump = *ctx.bumps.get("escrow_acc").unwrap();
+    escrow_acc.listing = ctx.accounts.listing.key();
+
+    let listing = &mut ctx.accounts.listing;
+    listing.sale_state = SaleState::Sold;
     Ok(())
 }

@@ -70,5 +70,7 @@ pub enum CustomError {
     #[msg("The account given does not match that of the respective account in escrow")]
     WrongAccount,
     #[msg("The user account has already been initialised")]
-    UserAlreadyInitialised
+    UserAlreadyInitialised,
+    #[msg("The listing does not belong to the receiver of the transaction")]
+    WrongListing
 }   

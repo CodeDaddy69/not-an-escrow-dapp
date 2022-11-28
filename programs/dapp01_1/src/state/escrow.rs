@@ -13,6 +13,8 @@ pub struct Escrow {
     // state
     pub state: TransState, 
     // account bump
-    pub bump: u8
+    pub bump: u8,
+    // listing address
+    pub listing: Pubkey
 }
 
