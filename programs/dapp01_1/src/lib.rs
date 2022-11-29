@@ -11,6 +11,7 @@ declare_id!("A1WQcJ7w8QPmyUmjUtfsvVMk47pCYcXSFf9hZq7mRwUF");
 
 #[program]
 pub mod dapp01_1 {
+
     use super::*;
 
     pub fn initialise_transaction(
@@ -56,6 +57,14 @@ pub mod dapp01_1 {
     ) -> Result<()> {
         instructions::initialise_listing_handler(ctx, listing_args)
     }
+
+    pub fn settle_dispute(
+        ctx: Context<SettleDispute>,
+        initialiser_amount: u64,
+        receiver_amount: u64,
+    ) -> Result<()> {
+        instructions::dispute_settled_handler(ctx, initialiser_amount, receiver_amount)
+    }
 }
 
 #[constant]
@@ -72,5 +81,7 @@ pub enum CustomError {
     #[msg("The user account has already been initialised")]
     UserAlreadyInitialised,
     #[msg("The listing does not belong to the receiver of the transaction")]
-    WrongListing
+    WrongListing,
+    #[msg("The dispute address entered does not match the one on the smart contract")]
+    WrongDisputeAddress
 }   

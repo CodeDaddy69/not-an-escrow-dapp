@@ -89,7 +89,8 @@ pub fn buyer_received_handler(ctx: Context<BuyerReceived>, to_dispute: bool) -> 
 
     // FINALISE OR SEND TO DISPUTE
     if to_dispute {
-    
+
+
         // TODO: ADD DISPUTE FUNCTIONALITY
 
         let escrow = &mut ctx.accounts.escrow_acc;

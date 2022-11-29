@@ -5,6 +5,7 @@ mod buyer_received;
 mod seller_sent;
 mod initialise_user;
 mod create_listing;
+mod dispute_settle;
 
 pub use initialise_trade::*;
 pub use create_mint::*;
@@ -13,3 +14,4 @@ pub use buyer_received::*;
 pub use seller_sent::*;
 pub use initialise_user::*;
 pub use create_listing::*;
+pub use dispute_settle::*;
