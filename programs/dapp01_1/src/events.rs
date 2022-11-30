@@ -4,3 +4,13 @@ use anchor_lang::prelude::*;
 pub struct TransactionUpdated {
     pub transaction: Pubkey,
 }
+
+#[event]
+pub struct TransactionClosed {
+    pub transaction: Pubkey,
+}
+
+#[event]
+pub struct DisputeSettled {
+    pub transaction: Pubkey,
+}

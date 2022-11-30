@@ -1,5 +1,6 @@
 use anchor_lang::prelude::*;
 
+
 mod escrow;
 mod user_stats;
 mod listing;
@@ -7,6 +8,14 @@ mod listing;
 pub use escrow::*;
 pub use user_stats::*;
 pub use listing::*;
+
+
+
+pub mod dispute_address {
+    use anchor_lang::solana_program::declare_id;
+    
+    declare_id!("D2zKk2kDm92NbAcFYw1L7For9uJv5ChZr9i4zbNVU5KU");
+}
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, PartialEq, Eq)]
 pub enum TransState {

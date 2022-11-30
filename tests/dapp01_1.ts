@@ -6,6 +6,8 @@ import { TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID, withdrawWithheldTokensFr
 import { getMint, createMint, createMintToInstruction, getAssociatedTokenAddress, createAssociatedTokenAccountInstruction } from '@solana/spl-token';
 import { Connection, Keypair, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { expect, assert } from "chai";
+import { ASSOCIATED_PROGRAM_ID } from "@project-serum/anchor/dist/cjs/utils/token";
+import KeyPair from "../tests/test_kp.json";
 
 export const wait = (ms: number) =>
   new Promise((resolve) => setTimeout(resolve, ms));
@@ -15,7 +17,7 @@ export const ProgramId = new anchor.web3.PublicKey(
   "A1WQcJ7w8QPmyUmjUtfsvVMk47pCYcXSFf9hZq7mRwUF"
   ) 
 
-  
+
   // const connection = new Connection('http://127.0.0.1:8899');
 
 
@@ -269,7 +271,7 @@ describe("dapp011", () => {
 
     console.log("HERE")
 
-    const tx3 = await program.methods.buyerReceived(false).accounts({
+    const tx3 = await program.methods.buyerReceived(true).accounts({
       initialiser: user.publicKey,
       receiver: receiverKP.publicKey,
       mint: mint.publicKey,
@@ -297,9 +299,31 @@ describe("dapp011", () => {
     const receiverStats2 = await program.account.userStats.fetch(receiverStatsPDA);
     console.log(receiverStats2);  
 
-    // CAUSES ERROR: PROVES LISTING ACCOUNT HAS BEEN CLOSED
+
+    // CAUSES ERROR: PROVES LISTING ACCOUNT HAS BEEN CLOSED (WITH buyerReceived(false))
     // const pda4data = await program.account.listing.fetch(listingpda);
     // console.log(pda4data)
+
+    const secretarray = Uint8Array.from(KeyPair);
+    const dispute_authority = Keypair.fromSecretKey(secretarray);
+
+    const tx5 = await program.methods.settleDispute(new anchor.BN(23), new anchor.BN(77)).accounts({
+      // initialiser: user.publicKey,
+      // initialiserTokenAccount: userATA,
+      // receiver: receiverKP.publicKey,
+      // receiverTokenAccount: receiverATA,
+      // initiaterStats: userStatsPDA,
+      // receiverStats: receiverStatsPDA,
+      // escrowAcc: escrowPDA,
+      // escrowTokenAccount: escrowTokenAddress,
+      disputeAuthority: dispute_authority.publicKey,
+      mint: mint.publicKey,
+      systemProgram: SystemProgram.programId,
+      tokenProgram: TOKEN_PROGRAM_ID,
+      associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+    })
+    .signers([dispute_authority])
+    .rpc()
   });
   
 });
