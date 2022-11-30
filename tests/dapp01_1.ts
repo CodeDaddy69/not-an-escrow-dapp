@@ -307,15 +307,12 @@ describe("dapp011", () => {
     const secretarray = Uint8Array.from(KeyPair);
     const dispute_authority = Keypair.fromSecretKey(secretarray);
 
-    const tx5 = await program.methods.settleDispute(new anchor.BN(23), new anchor.BN(77)).accounts({
-      // initialiser: user.publicKey,
-      // initialiserTokenAccount: userATA,
-      // receiver: receiverKP.publicKey,
-      // receiverTokenAccount: receiverATA,
-      // initiaterStats: userStatsPDA,
-      // receiverStats: receiverStatsPDA,
-      // escrowAcc: escrowPDA,
-      // escrowTokenAccount: escrowTokenAddress,
+    const tx6 = await program.methods.settleReceiver(new anchor.BN(77)).accounts({
+      receiver: receiverKP.publicKey,
+      receiverTokenAccount: receiverATA,
+      receiverStats: receiverStatsPDA, 
+      escrowAcc: escrowPDA,
+      escrowTokenAccount: escrowTokenAddress,
       disputeAuthority: dispute_authority.publicKey,
       mint: mint.publicKey,
       systemProgram: SystemProgram.programId,
@@ -323,7 +320,34 @@ describe("dapp011", () => {
       associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
     })
     .signers([dispute_authority])
-    .rpc()
+    .rpc();
+
+    const tx5 = await program.methods.settleInitialiser(new anchor.BN(23)).accounts({
+      initialiser: user.publicKey,
+      initialiserTokenAccount: userATA,
+      initiaterStats: userStatsPDA, 
+      escrowAcc: escrowPDA,
+      escrowTokenAccount: escrowTokenAddress,
+      disputeAuthority: dispute_authority.publicKey,
+      mint: mint.publicKey,
+      systemProgram: SystemProgram.programId,
+      tokenProgram: TOKEN_PROGRAM_ID,
+      associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+    })
+    .signers([dispute_authority])
+    .rpc();
+
+    const userATABalance5 = await program.provider.connection.getTokenAccountBalance(userATA);
+    console.log("user amount after", userATABalance5.value.amount); 
+
+    const receiverATABalance5 = await program.provider.connection.getTokenAccountBalance(receiverATA);
+    console.log("receiver amount after", receiverATABalance5.value.amount);  
+
+    // CAUSES ERROR: PROVES LISTING ACCOUNT HAS BEEN CLOSED (WITH buyerReceived(false))
+    const pda4data = await program.account.listing.fetch(listingpda);
+    console.log(pda4data)
+
+
+
   });
-  
 });

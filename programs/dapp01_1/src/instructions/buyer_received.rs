@@ -90,9 +90,6 @@ pub fn buyer_received_handler(ctx: Context<BuyerReceived>, to_dispute: bool) -> 
     // FINALISE OR SEND TO DISPUTE
     if to_dispute {
 
-
-        // TODO: ADD DISPUTE FUNCTIONALITY
-
         let escrow = &mut ctx.accounts.escrow_acc;
         escrow.state = TransState::Dispute;
         
@@ -101,25 +98,16 @@ pub fn buyer_received_handler(ctx: Context<BuyerReceived>, to_dispute: bool) -> 
         let escrow = &ctx.accounts.escrow_acc;
 
         token::transfer(
-            ctx.accounts.transfer_ctx().with_signer(&[&[
-                "escrow".as_bytes(),
-                escrow.initialiser.as_ref(),
-                escrow.listing.as_ref(),
-                &[escrow.bump],
-            ]]),
+            ctx.accounts.transfer_ctx().with_signer(&[&ctx.accounts.escrow_acc.as_seeds()]),
             escrow.amount,
         )?;
 
-        token::close_account(ctx.accounts.close_account_ctx().with_signer(&[&[
-            "escrow".as_bytes(),
-            escrow.initialiser.as_ref(),
-            escrow.listing.as_ref(),
-            &[escrow.bump],
-        ]]))?;
+        token::close_account(ctx.accounts.close_account_ctx().with_signer(&[&ctx.accounts.escrow_acc.as_seeds()]))?;
 
         let escrow = &mut ctx.accounts.escrow_acc;
         escrow.state = TransState::Finalised;
-
+        escrow.has_rrecived = true;
+        
         let initiater_stats = &mut ctx.accounts.initiater_stats;
         initiater_stats.purchases += 1;
         let receiver_stats = &mut ctx.accounts.receiver_stats;

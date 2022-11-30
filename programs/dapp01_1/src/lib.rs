@@ -58,12 +58,18 @@ pub mod dapp01_1 {
         instructions::initialise_listing_handler(ctx, listing_args)
     }
 
-    pub fn settle_dispute(
-        ctx: Context<SettleDispute>,
+    pub fn settle_initialiser(
+        ctx: Context<SettleInitialiser>,
         initialiser_amount: u64,
+    ) -> Result<()> {
+        instructions::settled_to_initialiser_handler(ctx, initialiser_amount)
+    }
+
+    pub fn settle_receiver(
+        ctx: Context<SettleReceiver>,
         receiver_amount: u64,
     ) -> Result<()> {
-        instructions::dispute_settled_handler(ctx, initialiser_amount, receiver_amount)
+        instructions::settled_to_receiver_handler(ctx, receiver_amount)
     }
 }
 
@@ -83,5 +89,11 @@ pub enum CustomError {
     #[msg("The listing does not belong to the receiver of the transaction")]
     WrongListing,
     #[msg("The dispute address entered does not match the one on the smart contract")]
-    WrongDisputeAddress
+    WrongDisputeAddress,
+    #[msg("The amount being transfered is larger than the amount stored in the escrow state")]
+    AmountTooLarge,
+    #[msg("The seller has already been sent their tokens")]
+    ReceiverAlreadyReceived,
+    #[msg("The seller needs to be sent tokens before the buyer")]
+    ReceiverNotYetReceived
 }   

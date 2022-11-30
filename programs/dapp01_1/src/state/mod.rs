@@ -24,7 +24,8 @@ pub enum TransState {
     SellerSent,
     Finalised,
     Dispute,
-    DisputeSettled
+    DisputeSettled,
+    Timeout
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, PartialEq, Eq)]
