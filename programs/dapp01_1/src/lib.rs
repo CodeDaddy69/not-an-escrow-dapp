@@ -38,6 +38,7 @@ pub mod dapp01_1 {
     ) -> Result<()> {
         instructions::seller_sent_handler(ctx)
     }
+
     pub fn buyer_received(
         ctx: Context<BuyerReceived>,
         to_dispute: bool
@@ -71,6 +72,32 @@ pub mod dapp01_1 {
     ) -> Result<()> {
         instructions::settled_to_receiver_handler(ctx, receiver_amount)
     }
+
+    pub fn cancel_listing(
+        ctx: Context<CancelListing>,
+        identifier: u64
+    ) -> Result<()> {
+        instructions::cancel_listing_handler(ctx, identifier)
+    }
+
+    pub fn timeoutss(
+        ctx: Context<TimeoutSS>
+    ) -> Result<()> {
+        instructions::timeoutss_handler(ctx)
+    }
+
+    pub fn timeoutbs(
+        ctx: Context<TimeoutBS>
+    ) -> Result<()> {
+        instructions::timeoutbs_handler(ctx)
+    }
+
+    pub fn close_listing(
+        ctx: Context<CloseListing>,
+        identifier: u64
+    ) -> Result<()> {
+        instructions::close_listing_handler(ctx, identifier)
+    }
 }
 
 #[constant]
@@ -86,8 +113,6 @@ pub enum CustomError {
     WrongAccount,
     #[msg("The user account has already been initialised")]
     UserAlreadyInitialised,
-    #[msg("The listing does not belong to the receiver of the transaction")]
-    WrongListing,
     #[msg("The dispute address entered does not match the one on the smart contract")]
     WrongDisputeAddress,
     #[msg("The amount being transfered is larger than the amount stored in the escrow state")]
@@ -95,5 +120,9 @@ pub enum CustomError {
     #[msg("The seller has already been sent their tokens")]
     ReceiverAlreadyReceived,
     #[msg("The seller needs to be sent tokens before the buyer")]
-    ReceiverNotYetReceived
+    ReceiverNotYetReceived,
+    #[msg("The amount entered does not match the listing price")]
+    WrongAmount,
+    #[msg("The listing address entered does not match that stored on the escrow")]
+    WrongListing,
 }   

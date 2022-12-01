@@ -9,6 +9,7 @@ use crate::state::{TransState, Escrow, Listing, SaleState};
 use crate::CustomError;
 
 #[derive(Accounts)]
+#[instruction(amount: u64)]
 pub struct InitialiseTransaction<'info> {
     #[account(mut)]
     pub initialiser: Signer<'info>,
@@ -32,7 +33,8 @@ pub struct InitialiseTransaction<'info> {
 
     #[account(
         mut,
-        constraint = listing.seller == receiver.key() @ CustomError::WrongListing
+        constraint = listing.seller == receiver.key() @ CustomError::WrongListing,
+        constraint = listing.price == amount @ CustomError::WrongAmount
     )]
     pub listing: Account<'info, Listing>,
     pub mint: Account<'info, Mint>,

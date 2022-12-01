@@ -28,11 +28,5 @@ pub fn initialise_user_handler(ctx: Context<InitialiseUser>) -> Result<()> {
 
     ctx.accounts.user_stats.set_inner(initial_stats);
 
-    // check for non-zero account stats
-    // for x in &ctx.accounts.user_stats.as_array() {
-    //     if x != &0 {
-    //         return err!(CustomError::UserAlreadyInitialised);
-    //     }
-    // }
     Ok(())
 }

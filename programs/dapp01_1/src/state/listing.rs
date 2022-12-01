@@ -13,6 +13,8 @@ use super::{ItemType, Colour, SaleState, Tag};
 pub struct Listing {
     // PDA bump
     pub bump: u8,
+    // price of listing
+    pub price: u64,
     // semi-unique transaction identifier
     pub identifier: u64,
     // the name of the listing
