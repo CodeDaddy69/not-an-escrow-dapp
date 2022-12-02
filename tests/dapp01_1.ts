@@ -30,6 +30,12 @@ const secretarray = Uint8Array.from(KeyPair);
 
 // variables
 const user = (program.provider as anchor.AnchorProvider).wallet; // initialise wallet
+const initialiserKP = anchor.web3.Keypair.generate() // initialise initialiser
+const initialiserProgram = new Program(
+  program.idl,
+  program.programId,
+  new anchor.AnchorProvider(program.provider.connection, new anchor.Wallet(initialiserKP), {})
+);
 const receiverKP = anchor.web3.Keypair.generate(); // initialise receiver
 const mint = anchor.web3.Keypair.generate(); // initialise mint address
 const dispute_authority = Keypair.fromSecretKey(secretarray); // authority key 
@@ -64,8 +70,11 @@ describe("dapp011", () => {
     .signers([mint])
     .rpc();
 
+
+    // fund initialising keypair
+    const tx1 = await program.provider.connection.requestAirdrop(initialiserKP.publicKey, 2*LAMPORTS_PER_SOL);
     // fund receiving keypair
-    const tx = await program.provider.connection.requestAirdrop(receiverKP.publicKey, 2*LAMPORTS_PER_SOL);
+    const tx2 = await program.provider.connection.requestAirdrop(receiverKP.publicKey, 2*LAMPORTS_PER_SOL);
     await wait(500);
 
         // PDA for initialiser account
@@ -74,7 +83,7 @@ describe("dapp011", () => {
     //    initialiser: pubkey
     const [PDA3, _bump3] = await PublicKey.findProgramAddressSync([
       anchor.utils.bytes.utf8.encode("user_stats"),
-      user.publicKey.toBuffer(),
+      initialiserKP.publicKey.toBuffer(),
     ], 
     program.programId
     );
@@ -101,11 +110,13 @@ describe("dapp011", () => {
     // description:
     //  Initialise user stats account.
     const tx3 = await program.methods.initialiseUser().accounts({
-      initialiser: user.publicKey,
+      initialiser: initialiserKP.publicKey,
       userStats: initialiserStatsPDA,
       systemProgram: SystemProgram.programId
     })
+    .signers([initialiserKP])
     .rpc();
+
 
     // send initialise_transaction instruction:
     //  arguments:
@@ -122,24 +133,24 @@ describe("dapp011", () => {
     .signers([receiverKP])
     .rpc();
 
+
     // initialiser associated token address
-    initialiserATA = await getAssociatedTokenAddress(mint.publicKey, user.publicKey);
+    initialiserATA = await getAssociatedTokenAddress(mint.publicKey, initialiserKP.publicKey);
     // receiver associated token address
     receiverATA = await getAssociatedTokenAddress(mint.publicKey, receiverKP.publicKey);
-    
+
     // send transaction to create atas for given accounts.
     const tx5 = new anchor.web3.Transaction().add( 
-      createAssociatedTokenAccountInstruction(user.publicKey, initialiserATA, user.publicKey, mint.publicKey)
-    )
-    .add( 
-      createMintToInstruction(mint.publicKey, initialiserATA, user.publicKey, 1000)
+      createAssociatedTokenAccountInstruction(user.publicKey, initialiserATA, initialiserKP.publicKey, mint.publicKey)
     )
     .add( 
       createAssociatedTokenAccountInstruction(user.publicKey, receiverATA, receiverKP.publicKey, mint.publicKey)
+    )
+    .add( 
+      createMintToInstruction(mint.publicKey, initialiserATA, user.publicKey, 1000)
     );
-      
-    const signature = await program.provider.sendAndConfirm(tx5);
 
+    const signature = await program.provider.sendAndConfirm(tx5);
   })
   beforeEach("Initialise accounts", async () => {
     //////////////////////
@@ -182,7 +193,7 @@ describe("dapp011", () => {
     //    listing pda: pubkey
     const [PDA2, _bump2] = await PublicKey.findProgramAddress([
       anchor.utils.bytes.utf8.encode("escrow"),
-      user.publicKey.toBuffer(),
+      initialiserKP.publicKey.toBuffer(),
       listingpda.toBuffer()
     ], 
     program.programId
@@ -231,7 +242,7 @@ describe("dapp011", () => {
     //    receiver ata
     const tx2 = await program.methods.initialiseTransaction(new anchor.BN(100))
     .accounts({
-      initialiser: user.publicKey,
+      initialiser: initialiserKP.publicKey,
       receiver: receiverKP.publicKey,
       escrowAcc: escrowPDA,
       listing: listingpda,
@@ -242,6 +253,7 @@ describe("dapp011", () => {
       tokenProgram: TOKEN_PROGRAM_ID,
       rent: anchor.web3.SYSVAR_RENT_PUBKEY
     })
+    .signers([initialiserKP])
     .rpc();
 
     // const DEBUG = await program.provider.connection.getParsedAccountInfo(escrowATA);
@@ -253,24 +265,9 @@ describe("dapp011", () => {
     console.log("listing address:", listingpda.toString());
     console.log("escrow: listing amount", escrowAccData.amount.toNumber());
     console.log("escrow: state", Object.keys(escrowAccData.state)[0]);
-    // assert.equal(escrowAccData.amount.toNumber(), 100, "escrow amount data is equal to expected");
-    // assert.isTrue(escrowAccData.initialiser.equals(user.publicKey), "escrow initialiser  is equal to expected");
-    // assert.isTrue(escrowAccData.receiver.equals(receiverKP.publicKey), "escrow receiver is equal to expected");
-    // assert.equal(Object.keys(escrowAccData.state)[0], 'initialised');
 
-    // const escrowATAData = await program.provider.connection.getParsedAccountInfo(escrowATA);
-    // console.log("escrow ATA:", escrowATAData.value.data.valueOf());
-    
-
-    // const escrowAccData = await program.account.escrow.fetch(escrowPDA);
-    // console.log("escrow state before", Object.keys(escrowAccData.state)[0]);
-    // const initialiserATABalance = await program.provider.connection.getTokenAccountBalance(initialiserATA);
-    // console.log("user amount before", initialiserATABalance.value.amount);  
-    // const escrowATABalance = await program.provider.connection.getTokenAccountBalance(escrowATA);
-    // console.log("escrow amount before", escrowATABalance.value.amount);
-
-    const tx6 = await program.methods.buyerTransfer().accounts({
-      initialiser: user.publicKey,
+    const tx6 = await initialiserProgram.methods.buyerTransfer().accounts({
+      initialiser: initialiserKP.publicKey,
       mint: mint.publicKey,
       initialiserTokenAccount: initialiserATA,
       escrow: escrowPDA,
@@ -279,16 +276,11 @@ describe("dapp011", () => {
       associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
       tokenProgram: TOKEN_PROGRAM_ID,
     })
+ //   .signers([initialiserKP])
     .rpc();
 
     console.log(" ////////////////////////\n","//ACCOUNTS INITIALISED//\n","////////////////////////")
 
-    // const initialiserATABalance2 = await program.provider.connection.getTokenAccountBalance(initialiserATA);
-    // console.log("user amount after", initialiserATABalance2.value.amount);  
-    // const escrowATABalance2 = await program.provider.connection.getTokenAccountBalance(escrowATA);
-    // console.log("escrow amount after", escrowATABalance2.value.amount);
-    // const escrowAccData2 = await program.account.escrow.fetch(escrowPDA);
-    // console.log("escrow state after", Object.keys(escrowAccData2.state)[0]);
   })
   
   it("timeout: seller didn't respond", async () => {
@@ -303,7 +295,7 @@ describe("dapp011", () => {
     console.log("initialiser account balance before timeout:", initialiserATAData.value.amount)
 
     const tx = await program.methods.timeoutbs().accounts({
-      initialiser: user.publicKey,
+      initialiser: initialiserKP.publicKey,
       mint: mint.publicKey,
       escrowAcc: escrowPDA,
       escrowTokenAccount: escrowATA,
@@ -360,7 +352,7 @@ describe("dapp011", () => {
     console.log("escrow: state", Object.keys(escrowAccData2.state)[0]);
 
     const tx = await program.methods.timeoutss().accounts({
-      initialiser: user.publicKey,
+      initialiser: initialiserKP.publicKey,
       mint: mint.publicKey,
       escrowAcc: escrowPDA,
       escrowTokenAccount: escrowATA,
@@ -420,7 +412,7 @@ describe("dapp011", () => {
     console.log("escrow state:", Object.keys(escrowAccData2.state)[0]);
 
     const tx2 = await program.methods.buyerReceived(false).accounts({
-      initialiser: user.publicKey,
+      initialiser: initialiserKP.publicKey,
       receiver: receiverKP.publicKey,
       mint: mint.publicKey,
       listing: listingpda, 
@@ -433,6 +425,7 @@ describe("dapp011", () => {
       systemProgram: SystemProgram.programId,
       associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
     })
+    .signers([initialiserKP])
     .rpc()
 
   
@@ -472,7 +465,7 @@ it("to dispute", async () => {
     console.log("escrow state:", Object.keys(escrowAccData2.state)[0]);
 
     const tx2 = await program.methods.buyerReceived(true).accounts({
-      initialiser: user.publicKey,
+      initialiser: initialiserKP.publicKey,
       receiver: receiverKP.publicKey,
       mint: mint.publicKey,
       listing: listingpda, 
@@ -485,6 +478,7 @@ it("to dispute", async () => {
       systemProgram: SystemProgram.programId,
       associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
     })
+    .signers([initialiserKP])
     .rpc()
 
     const escrowAccData3 = await program.account.escrow.fetch(escrowPDA);
@@ -507,7 +501,7 @@ it("to dispute", async () => {
     .rpc();
 
     const tx5 = await program.methods.settleInitialiser(new anchor.BN(23)).accounts({
-      initialiser: user.publicKey,
+      initialiser: initialiserKP.publicKey,
       initialiserTokenAccount: initialiserATA,
       initiaterStats: initialiserStatsPDA, 
       escrowAcc: escrowPDA,
