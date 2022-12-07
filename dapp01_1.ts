@@ -1,7 +1,7 @@
 import * as anchor from "@project-serum/anchor";
-import { Program } from "@project-serum/anchor";
+import { AnchorError, Program } from "@project-serum/anchor";
 import { Dapp011 } from "../target/types/dapp01_1";
-import { ParsedAccountData, SystemProgram, PublicKey } from "@solana/web3.js";
+import { ConfirmOptions, SystemProgram, PublicKey } from "@solana/web3.js";
 import { TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID, withdrawWithheldTokensFromMint, createMintToCheckedInstruction } from "@solana/spl-token";
 import { getMint, createMint, createMintToInstruction, getAssociatedTokenAddress, createAssociatedTokenAccountInstruction } from '@solana/spl-token';
 import { Connection, Keypair, LAMPORTS_PER_SOL } from '@solana/web3.js';
@@ -22,25 +22,31 @@ function getRandomInt(max) {
   return Math.floor(Math.random() * max);
 }
 
+// let connection = new Connection("https://special-proportionate-slug.solana-testnet.discover.quiknode.pro/137c608fcf6f0a06d22a343cbb592a6f4402ef2a/", "confirmed")
+
 // Configure the client to use the local cluster.
-anchor.setProvider(anchor.AnchorProvider.env()); 
+anchor.setProvider(anchor.AnchorProvider.env());
+
 const program = anchor.workspace.Dapp011 as Program<Dapp011>;
 
 const secretarray = Uint8Array.from(KeyPair);
 
+
 // variables
 const user = (program.provider as anchor.AnchorProvider).wallet; // initialise wallet
+// anchor.setProvider(new anchor.AnchorProvider(connection, user, anchor.AnchorProvider.defaultOptions()));
 const initialiserKP = anchor.web3.Keypair.generate() // initialise initialiser
 const initialiserProgram = new Program(
   program.idl,
   program.programId,
-  new anchor.AnchorProvider(program.provider.connection, new anchor.Wallet(initialiserKP), {})
-);
+  // new anchor.AnchorProvider(connection, new anchor.Wallet(initialiserKP), anchor.AnchorProvider.defaultOptions())
+  new anchor.AnchorProvider(program.provider.connection, new anchor.Wallet(initialiserKP), anchor.AnchorProvider.defaultOptions())
+  );
 const receiverKP = anchor.web3.Keypair.generate(); // initialise receiver
 const mint = anchor.web3.Keypair.generate(); // initialise mint address
 const dispute_authority = Keypair.fromSecretKey(secretarray); // authority key 
 
-let escrowPDA: anchor.web3.PublicKey
+let escrowPDA: anchor.web3.PublicKey;
 let escrowATA: anchor.web3.PublicKey;
 let initialiserATA: anchor.web3.PublicKey;
 let receiverATA: anchor.web3.PublicKey;
@@ -50,6 +56,7 @@ let listingpda: anchor.web3.PublicKey;
 
 let listing_identifier;
 let listing_args;
+
 
 describe("dapp011", () => {
   before("Initialise mint and fund", async () => {
@@ -72,9 +79,9 @@ describe("dapp011", () => {
 
 
     // fund initialising keypair
-    const tx1 = await program.provider.connection.requestAirdrop(initialiserKP.publicKey, 2*LAMPORTS_PER_SOL);
+    const tx1 = await program.provider.connection.requestAirdrop(initialiserKP.publicKey, 1*LAMPORTS_PER_SOL);
     // fund receiving keypair
-    const tx2 = await program.provider.connection.requestAirdrop(receiverKP.publicKey, 2*LAMPORTS_PER_SOL);
+    const tx2 = await program.provider.connection.requestAirdrop(receiverKP.publicKey, 1*LAMPORTS_PER_SOL);
     await wait(500);
 
         // PDA for initialiser account
