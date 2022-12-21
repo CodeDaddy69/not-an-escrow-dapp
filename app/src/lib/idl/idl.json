@@ -1,0 +1,1119 @@
+{
+  "version": "0.1.0",
+  "name": "dapp01_1",
+  "constants": [
+    {
+      "name": "MAX_NAME_LEN",
+      "type": {
+        "defined": "usize"
+      },
+      "value": "50"
+    },
+    {
+      "name": "MAX_DESC_LEN",
+      "type": {
+        "defined": "usize"
+      },
+      "value": "200"
+    }
+  ],
+  "instructions": [
+    {
+      "name": "initialiseTransaction",
+      "accounts": [
+        {
+          "name": "initialiser",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "escrowAcc",
+          "isMut": true,
+          "isSigner": false,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "type": "string",
+                "value": "escrow"
+              },
+              {
+                "kind": "account",
+                "type": "publicKey",
+                "path": "initialiser"
+              },
+              {
+                "kind": "account",
+                "type": "publicKey",
+                "account": "Listing",
+                "path": "listing"
+              }
+            ]
+          }
+        },
+        {
+          "name": "receiver",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "listing",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "mint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "associatedTokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "buyerTransfer",
+      "accounts": [
+        {
+          "name": "initialiser",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "mint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "initialiserTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "escrow",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "escrowTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "associatedTokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "sellerSent",
+      "accounts": [
+        {
+          "name": "receiver",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "escrow",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "buyerReceived",
+      "accounts": [
+        {
+          "name": "listing",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "initialiser",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "receiver",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "mint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "receiverTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "escrowAcc",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "escrowTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "initiaterStats",
+          "isMut": true,
+          "isSigner": false,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "type": "string",
+                "value": "user_stats"
+              },
+              {
+                "kind": "account",
+                "type": "publicKey",
+                "path": "initialiser"
+              }
+            ]
+          }
+        },
+        {
+          "name": "receiverStats",
+          "isMut": true,
+          "isSigner": false,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "type": "string",
+                "value": "user_stats"
+              },
+              {
+                "kind": "account",
+                "type": "publicKey",
+                "path": "receiver"
+              }
+            ]
+          }
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "associatedTokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "toDispute",
+          "type": "bool"
+        }
+      ]
+    },
+    {
+      "name": "initialiseUser",
+      "accounts": [
+        {
+          "name": "userStats",
+          "isMut": true,
+          "isSigner": false,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "type": "string",
+                "value": "user_stats"
+              },
+              {
+                "kind": "account",
+                "type": "publicKey",
+                "path": "initialiser"
+              }
+            ]
+          }
+        },
+        {
+          "name": "initialiser",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "createListing",
+      "accounts": [
+        {
+          "name": "userListing",
+          "isMut": true,
+          "isSigner": false,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "type": "string",
+                "value": "listing"
+              },
+              {
+                "kind": "account",
+                "type": "publicKey",
+                "path": "initialiser"
+              },
+              {
+                "kind": "arg",
+                "type": {
+                  "defined": "Listing"
+                },
+                "path": "listing_args.identifier"
+              }
+            ]
+          }
+        },
+        {
+          "name": "initialiser",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "listingArgs",
+          "type": {
+            "defined": "Listing"
+          }
+        }
+      ]
+    },
+    {
+      "name": "settleInitialiser",
+      "accounts": [
+        {
+          "name": "initialiser",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "initialiserTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "initiaterStats",
+          "isMut": true,
+          "isSigner": false,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "type": "string",
+                "value": "user_stats"
+              },
+              {
+                "kind": "account",
+                "type": "publicKey",
+                "path": "initialiser"
+              }
+            ]
+          }
+        },
+        {
+          "name": "escrowAcc",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "escrowTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "disputeAuthority",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "mint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "associatedTokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "initialiserAmount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "settleReceiver",
+      "accounts": [
+        {
+          "name": "receiver",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "receiverTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "receiverStats",
+          "isMut": true,
+          "isSigner": false,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "type": "string",
+                "value": "user_stats"
+              },
+              {
+                "kind": "account",
+                "type": "publicKey",
+                "path": "receiver"
+              }
+            ]
+          }
+        },
+        {
+          "name": "escrowAcc",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "escrowTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "disputeAuthority",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "mint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "associatedTokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "receiverAmount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "cancelListing",
+      "accounts": [
+        {
+          "name": "userListing",
+          "isMut": true,
+          "isSigner": false,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "type": "string",
+                "value": "listing"
+              },
+              {
+                "kind": "account",
+                "type": "publicKey",
+                "path": "initialiser"
+              },
+              {
+                "kind": "arg",
+                "type": "u64",
+                "path": "identifier"
+              }
+            ]
+          }
+        },
+        {
+          "name": "initialiser",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "identifier",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "timeoutss",
+      "accounts": [
+        {
+          "name": "initialiser",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "receiver",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "mint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "receiverTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "escrowAcc",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "escrowTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "initiaterStats",
+          "isMut": true,
+          "isSigner": false,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "type": "string",
+                "value": "user_stats"
+              },
+              {
+                "kind": "account",
+                "type": "publicKey",
+                "account": "Escrow",
+                "path": "escrow_acc.initialiser"
+              }
+            ]
+          }
+        },
+        {
+          "name": "receiverStats",
+          "isMut": true,
+          "isSigner": false,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "type": "string",
+                "value": "user_stats"
+              },
+              {
+                "kind": "account",
+                "type": "publicKey",
+                "path": "receiver"
+              }
+            ]
+          }
+        },
+        {
+          "name": "systemAuthority",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "associatedTokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "timeoutbs",
+      "accounts": [
+        {
+          "name": "initialiser",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "mint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "initialiserTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "escrowAcc",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "escrowTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "initiaterStats",
+          "isMut": true,
+          "isSigner": false,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "type": "string",
+                "value": "user_stats"
+              },
+              {
+                "kind": "account",
+                "type": "publicKey",
+                "account": "Escrow",
+                "path": "escrow_acc.initialiser"
+              }
+            ]
+          }
+        },
+        {
+          "name": "receiverStats",
+          "isMut": true,
+          "isSigner": false,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "type": "string",
+                "value": "user_stats"
+              },
+              {
+                "kind": "account",
+                "type": "publicKey",
+                "account": "Escrow",
+                "path": "escrow_acc.receiver"
+              }
+            ]
+          }
+        },
+        {
+          "name": "systemAuthority",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "associatedTokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "closeListing",
+      "accounts": [
+        {
+          "name": "userListing",
+          "isMut": true,
+          "isSigner": false,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "type": "string",
+                "value": "listing"
+              },
+              {
+                "kind": "account",
+                "type": "publicKey",
+                "path": "receiver"
+              },
+              {
+                "kind": "arg",
+                "type": "u64",
+                "path": "identifier"
+              }
+            ]
+          }
+        },
+        {
+          "name": "escrowAcc",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "receiver",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemAuthority",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "identifier",
+          "type": "u64"
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "Escrow",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "initialiser",
+            "type": "publicKey"
+          },
+          {
+            "name": "receiver",
+            "type": "publicKey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "state",
+            "type": {
+              "defined": "TransState"
+            }
+          },
+          {
+            "name": "bump",
+            "type": {
+              "array": [
+                "u8",
+                1
+              ]
+            }
+          },
+          {
+            "name": "listing",
+            "type": "publicKey"
+          },
+          {
+            "name": "hasRrecived",
+            "type": "bool"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Listing",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "price",
+            "type": "u64"
+          },
+          {
+            "name": "identifier",
+            "type": "u64"
+          },
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "itemType",
+            "type": {
+              "defined": "ItemType"
+            }
+          },
+          {
+            "name": "colour",
+            "type": {
+              "defined": "Colour"
+            }
+          },
+          {
+            "name": "condition",
+            "type": {
+              "defined": "Condition"
+            }
+          },
+          {
+            "name": "seller",
+            "type": "publicKey"
+          },
+          {
+            "name": "saleState",
+            "type": {
+              "defined": "SaleState"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "UserStats",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "purchases",
+            "type": "u32"
+          },
+          {
+            "name": "purchaseDisputes",
+            "type": "u32"
+          },
+          {
+            "name": "sales",
+            "type": "u32"
+          },
+          {
+            "name": "saleDisputes",
+            "type": "u32"
+          }
+        ]
+      }
+    }
+  ],
+  "types": [
+    {
+      "name": "Condition",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "tag",
+            "type": {
+              "defined": "Tag"
+            }
+          },
+          {
+            "name": "conditionMap",
+            "type": {
+              "vec": {
+                "defined": "ConditionMap"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "ConditionMap",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "isMajor",
+            "type": "bool"
+          },
+          {
+            "name": "isFront",
+            "type": "bool"
+          },
+          {
+            "name": "xPos",
+            "type": "u8"
+          },
+          {
+            "name": "yPos",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "TransState",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Initialised"
+          },
+          {
+            "name": "BuyerSent"
+          },
+          {
+            "name": "SellerSent"
+          },
+          {
+            "name": "Finalised"
+          },
+          {
+            "name": "Dispute"
+          },
+          {
+            "name": "DisputeSettled"
+          },
+          {
+            "name": "Timeout"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ItemType",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Jacket"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Colour",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Blue"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Tag",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "New"
+          },
+          {
+            "name": "Used"
+          }
+        ]
+      }
+    },
+    {
+      "name": "SaleState",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "ForSale"
+          },
+          {
+            "name": "Sold"
+          }
+        ]
+      }
+    }
+  ],
+  "events": [
+    {
+      "name": "TransactionUpdated",
+      "fields": [
+        {
+          "name": "transaction",
+          "type": "publicKey",
+          "index": false
+        }
+      ]
+    },
+    {
+      "name": "TransactionClosed",
+      "fields": [
+        {
+          "name": "transaction",
+          "type": "publicKey",
+          "index": false
+        }
+      ]
+    },
+    {
+      "name": "DisputeSettled",
+      "fields": [
+        {
+          "name": "transaction",
+          "type": "publicKey",
+          "index": false
+        }
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "WrongState",
+      "msg": "The state of the escrow given does not match the state required"
+    },
+    {
+      "code": 6001,
+      "name": "WrongAccount",
+      "msg": "The account given does not match that of the respective account in escrow"
+    },
+    {
+      "code": 6002,
+      "name": "UserAlreadyInitialised",
+      "msg": "The user account has already been initialised"
+    },
+    {
+      "code": 6003,
+      "name": "WrongDisputeAddress",
+      "msg": "The dispute address entered does not match the one on the smart contract"
+    },
+    {
+      "code": 6004,
+      "name": "AmountTooLarge",
+      "msg": "The amount being transfered is larger than the amount stored in the escrow state"
+    },
+    {
+      "code": 6005,
+      "name": "ReceiverAlreadyReceived",
+      "msg": "The seller has already been sent their tokens"
+    },
+    {
+      "code": 6006,
+      "name": "ReceiverNotYetReceived",
+      "msg": "The seller needs to be sent tokens before the buyer"
+    },
+    {
+      "code": 6007,
+      "name": "WrongAmount",
+      "msg": "The amount entered does not match the listing price"
+    },
+    {
+      "code": 6008,
+      "name": "WrongListing",
+      "msg": "The listing address entered does not match that stored on the escrow"
+    }
+  ],
+  "metadata": {
+    "address": "A1WQcJ7w8QPmyUmjUtfsvVMk47pCYcXSFf9hZq7mRwUF"
+  }
+}

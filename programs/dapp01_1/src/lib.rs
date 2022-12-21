@@ -21,12 +21,6 @@ pub mod dapp01_1 {
         instructions::initialise_transaction_handler(ctx, amount)
     }
 
-    pub fn create_mint(
-        ctx: Context<InitMint>, 
-    ) -> Result<()> {
-        instructions::init_mint(ctx)
-    }
-
     pub fn buyer_transfer(
         ctx: Context<BuyerTransfer>,
     ) -> Result<()> {

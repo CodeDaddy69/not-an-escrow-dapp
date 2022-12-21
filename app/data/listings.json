@@ -1,0 +1,16 @@
+[
+    {
+    "account":"8PicuETn3oTfcv1JQzxszzD4A4ecsqz3NdJKpYXmW8VJ",
+    "identifier": 229587561,
+    "listing": {
+        "bump": 255,
+        "price": 69,
+        "name": "test",
+        "itemType": {"jacket":{}} ,
+        "colour": {"blue":{}} ,
+        "condition": {"tag": {"new":{} }, "conditionMap": [{"isMajor": true, "isFront": true, "xPos": 1, "yPos": 1}]},
+        "seller": "8PicuETn3oTfcv1JQzxszzD4A4ecsqz3NdJKpYXmW8VJ",
+        "saleState": {"forSale":{}}
+      }
+    }
+]
